@@ -447,7 +447,7 @@ def simulate_prediction():
     df = df[model_columns]
 
     # Load the actual model (XGBoost)
-    model_path = Path("xgboost_model.pkl")
+    model_path = Path("xgboost_model_new.pkl")
     model = load_xgboost_model(model_path)
 
     if model is None:
@@ -515,6 +515,14 @@ def render_prediction_result():
     </div>
     """, unsafe_allow_html=True)
     
+    # Feature-contribution plot
+    st.header("🔍 Feature Contribution Plot")
+    st.image(
+        "feature-contribution plot.png",  
+        caption="Feature-contribution Plot",      
+        width=1300            
+    )
+
     # Recommendations
     st.subheader("📋 Recommendations")
     for i, rec in enumerate(result['recommendations']):
