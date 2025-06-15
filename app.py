@@ -401,16 +401,16 @@ def simulate_prediction():
     """Simulate heart attack risk prediction"""
 
     model_columns = [ 
-        'age', 'sex', 'bmi', 'income', 'diabetes', 'family history',
-        'previous heart problems', 'medication use', 'heart rate',
-        'systolic pressure', 'diastolic pressure', 'cholesterol', 'triglycerides',
-        'smoking', 'obesity', 'alcohol consumption', 'stress level',
-        'exercise hours per week', 'physical activity days per week',
-        'sedentary hours per day', 'sleep hours per day', 'diet_Average',
-        'diet_Healthy', 'diet_Unhealthy', 'country_Argentina','country_Australia',
-        'country_Brazil','country_Canada','country_China','country_Colombia',
-        'country_France','country_Germany','country_India','country_Italy',
-        'country_Japan','country_New Zealand','country_Nigeria','country_South Africa'
+        'age', 'sex', 'cholesterol', 'heart rate', 'diabetes', 'family history',
+       'smoking', 'obesity', 'alcohol consumption', 'exercise hours per week',
+       'diet', 'previous heart problems', 'medication use', 'stress level',
+       'sedentary hours per day', 'income', 'bmi', 'triglycerides',
+       'physical activity days per week', 'sleep hours per day',
+       'systolic pressure', 'diastolic pressure', 'latitude', 'longitude',
+       'country_Australia', 'country_Brazil', 'country_Canada',
+       'country_China', 'country_France', 'country_Germany', 'country_India',
+       'country_Italy', 'country_Japan', 'country_Mexico',
+       'country_South Africa', 'country_Spain', 'country_UK', 'country_USA'
     ]
     #,'country_South Korea','country_Spain','country_Thailand','country_United Kingdom', 'country_United States','country_Vietnam'
     # Create a dictionary with all model columns initialized to 0
@@ -470,7 +470,8 @@ def simulate_prediction():
         'score': round(risk_score, 1),
         'level': risk_level,
         'prediction': prediction,
-        'recommendations': get_recommendations(risk_level)
+        'recommendations': get_recommendations(risk_level),
+        'input_df': df
     }
 
 def get_recommendations(risk_level: str) -> List[str]:
@@ -517,11 +518,40 @@ def render_prediction_result():
     
     # Feature-contribution plot
     st.header("🔍 Feature Contribution Plot")
-    st.image(
-        "feature-contribution plot.png",  
-        caption="Feature-contribution Plot",      
-        width=1300            
-    )
+    try:
+        import shap
+        import matplotlib.pyplot as plt
+
+        st.subheader("🧬 Why did the model predict this? (SHAP Waterfall Plot)")
+
+        # Load your background data
+        X_test_df = pd.read_csv(Path(r"X_test_df.csv"))
+        model = load_xgboost_model(Path("xgboost_model_new.pkl"))
+
+        input_df = result.get('input_df', None)
+        if input_df is not None:
+            explainer = shap.Explainer(model, X_test_df)
+            shap_values = explainer(input_df)
+
+            
+            plt.rcParams['figure.figsize'] = (2, 2)
+            plt.rcParams['font.size'] = 6
+            plt.rcParams['axes.titlesize'] = 6
+            plt.rcParams['axes.labelsize'] = 6
+            plt.rcParams['xtick.labelsize'] = 5
+            plt.rcParams['ytick.labelsize'] = 5
+
+            # Draw the SHAP waterfall plot
+            shap.plots.waterfall(shap_values[0], max_display=10, show=False)
+
+            # Display in Streamlit
+            st.pyplot(plt.gcf())
+           
+        else:
+            st.warning("No input data available for SHAP explanation.")
+    except Exception as e:
+        st.warning(f"Could not display SHAP explanation: {e}")
+   
 
     # Recommendations
     st.subheader("📋 Recommendations")
@@ -546,6 +576,7 @@ def render_prediction_result():
         st.session_state.form_data = {}
         st.session_state.prediction_result = None
         st.rerun()
+    
 
 # --------------------------------------------------
 # Main application
