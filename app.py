@@ -7,6 +7,7 @@ from typing import Dict, List, Tuple
 import warnings
 import numpy as np
 import sklearn
+import shap
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
